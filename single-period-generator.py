@@ -2,17 +2,18 @@ import numpy as np
 from PIL import Image, ImageTk
 import tkinter as tk
 import screeninfo
+import matplotlib.pyplot as plt
 
 
 monitor = 0
-
 x_max = 100
-flip = False
 y_min = 0
 y_max = 255
 phi = 0
 height, width = (1080, 1920)
-alpha = -2
+alpha = 1
+flip = True
+linear = False
 
 class ImageDisplay(tk.Toplevel):
     def __init__(self, monitor: int):
@@ -68,21 +69,28 @@ class App(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW")
 
-        img = generate_sawtooth(x_max, y_min, y_max, phi, height, width, alpha, flip)
+        img = generate_sawtooth(x_max, y_min, y_max, phi, height, width, alpha, flip, linear)
 
         self.image_display.show_image(img)
 
         self.mainloop()
 
-def generate_sawtooth(x_max, y_min, y_max, phi, height, width, alpha, flip):
+def generate_sawtooth(x_max, y_min, y_max, phi, height, width, alpha, flip, linear):
     sidelength = int(np.sqrt(height ** 2 + width ** 2))
     phase = np.linspace(0, 1, x_max-1)
 
-    values = y_min + exponential_sawtooth(phase, alpha) * (y_max - y_min)
+    if linear:
+        sawtooth_func = lambda: phase
+    else:
+        sawtooth_func = lambda: exponential_sawtooth(phase, alpha)
+
+    values = y_min + sawtooth_func() * (y_max - y_min)
+
+    plt.plot(values)
+    plt.show()
 
     if flip:
-        values = np.flip(values)
-        image_matrix = np.tile(values.astype(np.uint8), (sidelength, 1))
+        image_matrix = np.tile(np.flip(values).astype(np.uint8), (sidelength, 1))
     else:
         image_matrix = np.tile(values.astype(np.uint8), (sidelength, 1))
 
